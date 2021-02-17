@@ -1,0 +1,235 @@
+
+
+go get -u github.com/tsaarni/certyaml             # install certyaml tool
+mkdir -p certs
+certyaml --destination certs configs/certs.yaml   # generate certificates and keys
+
+
+
+docker-compose up
+docker-compose rm -f  # clean previous containers
+
+
+git clone git@github.com:tsaarni/ldap-test-server-notice-of-disconnect.git
+cd ~/work/ldap-test-server-notice-of-disconnect
+go run .
+
+
+
+sudo apt install python3-ldap3
+
+
+ipython3
+
+from ldap3 import Server, Connection, ALL                                                                                                               
+s = Server('localhost', port=9012)
+
+
+# admin
+admin = Connection(s, user='cn=Manager,dc=local,dc=com', password='secret')
+admin.bind()
+admin.search('ou=People,dc=example,dc=com','(objectclass=*)')
+
+
+
+
+# user 
+bjensen = Connection(s, user='cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com', password='bjensen')
+bjensen.bind()
+bjensen.search('ou=People,dc=example,dc=com','(objectclass=*)')
+
+bjensen.search('cn=Notice of Disconnect,ou=RetCodes,dc=example,dc=com','(objectclass=*)')
+
+
+
+# anonymous
+anon = Connection(s)
+anon.bind()
+anon.search('ou=People,dc=example,dc=com','(objectclass=*)')
+
+
+
+
+
+
+c.entries
+
+c.search('cn=Notice of Disconnect,ou=RetCodes,dc=example,dc=com','(objectclass=*)')
+c.unbind()
+
+
+
+
+ldapsearch -H ldap://localhost:9012 -D "cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com" -w "bjensen" -b "ou=People,dc=example,dc=com"
+ldapsearch -H ldap://localhost:9012 -D "cn=Manager,dc=local,dc=com" -w "secret" -b "ou=People,dc=example,dc=com"
+
+
+ldapsearch -H ldap://localhost:9012 -D "cn=Manager,dc=local,dc=com" -w "secret" -b 'cn=Monitor' '(objectClass=*)' '*' '+'
+
+
+ldapsearch -H ldap://localhost:9012 -D "cn=Manager,dc=local,dc=com" -w "secret" -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" '(objectClass=*)' +
+
+
+ldapsearch -H ldap://localhost:9012 -D "cn=Manager,dc=local,dc=com" -w "secret" -b "dc=idle-timeout,dc=example,dc=com" -E \!sync=ro
+
+
+
+
+*** LDAP disconnect problem
+
+
+cp -a openldap/tests/data/regressions/itsNNNN ~/work/openldap/tests/data/regressions
+cd ~/work/openldap/tests
+
+killall slapd; SLAPD_DEBUG=-1 ./run -b mdb itsNNNN
+tail -F testrun/slapd.2.log
+
+
+./configure CFLAGS='-g -O0' CXXFLAGS='-g -O0' --enable-overlays --enable-ldap
+./configure --enable-backends=mod --enable-overlays=mod --enable-modules --enable-dynamic --disable-ndb --disable-asyncmeta --enable-balancer=mod
+make -j
+
+
+gdb ~/work/openldap/tests/../servers/slapd/slapd --pid=$(pidof slapd)
+b ldap_back_retry
+
+b bind.c:2105
+commands
+silent
+bt
+printf "op->o_tag: 0x%x", op->o_tag
+p ndn
+cont
+end
+
+
+# decrypt traffic
+wireshark -i lo -d tcp.port==9011,ldap -d tcp.port==9012,ldap -k -o tls.keylog_file:$HOME/wireshark-keys.log
+
+
+
+
+b bind.c:3170
+command
+silent
+printf "THREAD=%d SET_TIMER=%d\n", $_thread, li->li_conn_expire_task->interval.tv_sec
+cont
+end
+
+b daemon.c:2864
+command
+silent
+if tvp != 0
+  printf "THREAD=%d EVENT_WAIT=%d\n", $_thread, tvp->tv_sec
+else
+  printf "THREAD=%d EVENT_WAIT=-1\n", $_thread
+end
+cont
+end
+
+b daemon.c:2865
+command
+silent
+printf "THREAD=%d --> %d\n", $_thread, ns
+cont
+end
+
+set pagination off
+
+
+DEADLOCK
+
+[Switching to Thread 0x7fbe6fdfb700 (LWP 2569513)]
+THREAD=2 EVENT_WAIT=1643743561
+THREAD=2 EVENT_WAIT=1643743553
+THREAD=2 EVENT_WAIT=1643743553
+THREAD=2 EVENT_WAIT=1643743553
+THREAD=2 EVENT_WAIT=1643743553
+THREAD=2 EVENT_WAIT=1643743553
+THREAD=2 EVENT_WAIT=1643743553
+THREAD=2 EVENT_WAIT=1643743552
+THREAD=2 EVENT_WAIT=1643743552
+[Switching to Thread 0x7fbe6f5fa700 (LWP 2569514)]
+THREAD=3 SET_TIMER=5
+[Switching to Thread 0x7fbe6fdfb700 (LWP 2569513)]
+THREAD=2 EVENT_WAIT=5
+THREAD=2 EVENT_WAIT=5
+[Switching to Thread 0x7fbe6f5fa700 (LWP 2569514)]
+THREAD=3 SET_TIMER=1643743889
+[Switching to Thread 0x7fbe6fdfb700 (LWP 2569513)]
+THREAD=2 EVENT_WAIT=1643743884
+THREAD=2 EVENT_WAIT=1643743859
+THREAD=2 EVENT_WAIT=1643743859
+THREAD=2 EVENT_WAIT=1643743859
+THREAD=2 EVENT_WAIT=1643743859
+THREAD=2 EVENT_WAIT=1643743859
+THREAD=2 EVENT_WAIT=1643743859
+THREAD=2 EVENT_WAIT=1643743859
+THREAD=2 EVENT_WAIT=1643743859
+THREAD=2 EVENT_WAIT=1643743859
+[Switching to Thread 0x7fbe6f5fa700 (LWP 2569514)]
+THREAD=3 SET_TIMER=5
+
+
+OK
+
+[New Thread 0x7fbe6edf9700 (LWP 2571378)]
+[Switching to Thread 0x7fbe6fdfb700 (LWP 2569513)]
+THREAD=2 EVENT_WAIT=5
+[Switching to Thread 0x7fbe6edf9700 (LWP 2571378)]
+THREAD=4 SET_TIMER=1643743983
+[Switching to Thread 0x7fbe6fdfb700 (LWP 2569513)]
+THREAD=2 EVENT_WAIT=1643743983
+THREAD=2 EVENT_WAIT=1643743983
+THREAD=2 EVENT_WAIT=1643743983
+THREAD=2 EVENT_WAIT=1643743983
+THREAD=2 EVENT_WAIT=1643743983
+THREAD=2 EVENT_WAIT=1643743983
+[Switching to Thread 0x7fbe6f5fa700 (LWP 2569514)]
+THREAD=3 SET_TIMER=5
+[Switching to Thread 0x7fbe6fdfb700 (LWP 2569513)]
+THREAD=2 EVENT_WAIT=5
+THREAD=2 EVENT_WAIT=5
+[Switching to Thread 0x7fbe6edf9700 (LWP 2571378)]
+THREAD=4 SET_TIMER=1643743988
+[Switching to Thread 0x7fbe6fdfb700 (LWP 2569513)]
+THREAD=2 EVENT_WAIT=1643743983
+
+
+DEADLOCK
+
+[Switching to Thread 0x7fe65baa2700 (LWP 2584631)]
+THREAD=3 SET_TIMER=5
+[Switching to Thread 0x7fe65c2a3700 (LWP 2584630)]
+THREAD=2 EVENT_WAIT=5
+THREAD=2 --> 0
+THREAD=2 EVENT_WAIT=5
+[Switching to Thread 0x7fe65baa2700 (LWP 2584631)]
+THREAD=3 SET_TIMER=1643746108
+[Switching to Thread 0x7fe65c2a3700 (LWP 2584630)]
+THREAD=2 --> 1
+THREAD=2 EVENT_WAIT=1643746105
+THREAD=2 --> 2
+THREAD=2 EVENT_WAIT=1643746105
+THREAD=2 --> 1
+THREAD=2 EVENT_WAIT=1643746105
+THREAD=2 --> 1
+THREAD=2 EVENT_WAIT=1643746105
+THREAD=2 --> 1
+THREAD=2 EVENT_WAIT=1643746105
+THREAD=2 --> 1
+THREAD=2 EVENT_WAIT=1643746105
+THREAD=2 --> 1
+THREAD=2 EVENT_WAIT=1643746105
+THREAD=2 --> 1
+THREAD=2 EVENT_WAIT=1643746105
+THREAD=2 --> 1
+THREAD=2 EVENT_WAIT=1643746105
+THREAD=2 --> 1
+THREAD=2 EVENT_WAIT=1643746105
+THREAD=2 --> 1
+THREAD=2 EVENT_WAIT=1643746105
+[Switching to Thread 0x7fe65baa2700 (LWP 2584631)]
+THREAD=3 SET_TIMER=5
+
+
