@@ -74,21 +74,52 @@ ldapsearch -H ldap://localhost:9012 -D "cn=Manager,dc=local,dc=com" -w "secret" 
 
 
 
+*** Run CI tests in Docker
 
-*** LDAP disconnect problem
+docker build -t openldap-ci:latest docker/openldap-ci/
+
+docker run --rm -it --volume $PWD:/src:ro openldap-ci:latest bash
+make-test
+
+
+
+
+
+*** Development and running individual tests
 
 
 cp -a openldap/tests/data/regressions/itsNNNN ~/work/openldap/tests/data/regressions
-cd ~/work/openldap/tests
+cd ~/work/openldap
 
-killall slapd; SLAPD_DEBUG=-1 ./run -b mdb itsNNNN
-tail -F testrun/slapd.2.log
-
-
+# compile slapd with overlays and back-ldap linked in statically
 ./configure CFLAGS='-g -O0' CXXFLAGS='-g -O0' --enable-overlays --enable-ldap
+make -j
+
+tail -F tests/testrun/slapd.2.log
+
+cd ~/work/openldap/tests
+killall slapd; SLAPD_DEBUG=-1 ./run -b mdb itsNNNN
+
+gdb ~/work/openldap/tests/../servers/slapd/slapd --pid=$(pidof slapd)
+
+
+
+
+# build with dynamically loadable modules
 ./configure --enable-backends=mod --enable-overlays=mod --enable-modules --enable-dynamic --disable-ndb --disable-asyncmeta --enable-balancer=mod
 make -j
 
+
+
+*** Decrypt LDAPS/StartTLS with wireshark
+
+see docker/openldap/sslkeylog
+
+wireshark -i lo -d tcp.port==9011,ldap -d tcp.port==9012,ldap -k -o tls.keylog_file:$HOME/wireshark-keys.log
+
+
+
+*** Troubleshoot threading problems
 
 gdb ~/work/openldap/tests/../servers/slapd/slapd --pid=$(pidof slapd)
 b ldap_back_retry
@@ -103,8 +134,6 @@ cont
 end
 
 
-# decrypt traffic
-wireshark -i lo -d tcp.port==9011,ldap -d tcp.port==9012,ldap -k -o tls.keylog_file:$HOME/wireshark-keys.log
 
 
 
