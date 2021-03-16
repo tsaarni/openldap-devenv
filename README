@@ -87,12 +87,17 @@ make-test
 
 *** Development and running individual tests
 
-
-cp -a openldap/tests/data/regressions/itsNNNN ~/work/openldap/tests/data/regressions
+# copy vscode config and test case code over the openldap repo
+cp -a openldap/* ~/work/openldap/
 cd ~/work/openldap
 
 # compile slapd with overlays and back-ldap linked in statically
 ./configure CFLAGS='-g -O0' CXXFLAGS='-g -O0' --enable-overlays --enable-ldap
+
+# generate compile_commands.json for vscode
+intercept-build make
+
+
 make -j
 
 tail -F tests/testrun/slapd.2.log
@@ -103,11 +108,15 @@ killall slapd; SLAPD_DEBUG=-1 ./run -b mdb itsNNNN
 gdb ~/work/openldap/tests/../servers/slapd/slapd --pid=$(pidof slapd)
 
 
+# loop single test for several times
+SLAPD_DEBUG=-1 ./run -l 500 -b mdb test079
+
 
 
 # build with dynamically loadable modules
 ./configure --enable-backends=mod --enable-overlays=mod --enable-modules --enable-dynamic --disable-ndb --disable-asyncmeta --enable-balancer=mod
 make -j
+
 
 
 
